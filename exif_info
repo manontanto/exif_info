@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+# exif_info
+#
+# manontanto
+'''
+ For macOS
+ 写真のExif情報を読み取り，撮影場所と撮影日時を抜き出して表示する
+ 場所は地図に示される
+ ファイル名は，Dialogを開いて選択する | 引数で指定する
+'''
+import os
+import sys
+from tkinter import filedialog as tkdialog
+import webbrowser
+import folium
+import exif
+
+root = tkdialog.Tk()
+root.withdraw()
+
+def main():
+    if len(sys.argv) == 2:
+        phname = sys.argv[1]
+        if not os.path.isfile(phname):
+            sys.exit(f'{phname}?')
+    else:
+        phname = Get_photo()
+
+    ph = exif.ExifImage(phname)
+    if ph.none:
+        sys.exit('No ExifInfo')
+
+    DT = ph.dt()  # Date, Time
+    if not DT:
+        print('撮影日時は記録されていません.')
+    else:
+        print('撮影日時: ' + DT)
+
+    lat, lon = ph.gps()
+    if (lat, lon) == (1, 0):
+        print('撮影場所は記録されていません.')
+    elif (lat, lon) == (1, 1):
+        print('GPSInfo exist but null')
+    else:
+        print(f'撮影場所: lat: {lat}, lon: {lon}')
+        Draw_map(lat, lon, DT)
+
+def Get_photo():
+    read_fileName = tkdialog.askopenfilename(filetypes=[('jpg files', '*.jpg')],\
+            initialdir = os.getcwd())
+    if not read_fileName:
+        sys.exit() # null read_fileName
+    return read_fileName
+
+def Draw_map(lt, ln, dt):
+    def save_map():
+        os.system('''/usr/bin/osascript -e\
+                'tell app "Finder" to set frontmost of process "Python" to true' ''')
+        html_fileName = tkdialog.asksaveasfilename(defaultextension='.html',\
+            initialdir=os.getcwd(), initialfile='location_map.html', title='Save as(.html)')
+        if not html_fileName:
+            return  # null write_filename
+        mymap.save(html_fileName)
+
+    mymap = folium.Map(location=[lt, ln],\
+        tiles='https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',\
+        attr='国土地理院 淡色地図', zoom_start=15)
+    if dt != '':
+        dt = '<span style="white-space: nowrap;">' + dt + '</span>'
+        folium.Marker(location=[lt, ln], popup=dt, show=True).add_to(mymap)
+    # save for Display
+    mymap.save('/tmp/location_map.html')
+    webbrowser.open('file:///tmp/location_map.html')
+    save_map()
+
+if __name__ == "__main__":
+    main()
