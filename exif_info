@@ -46,25 +46,34 @@ def main():
         Draw_map(lat, lon, DT)
 
 def Get_photo():
-    read_fileName = tkdialog.askopenfilename(filetypes=[('jpg files', '*.jpg')],\
-            initialdir = os.getcwd())
+    read_fileName = tkdialog.askopenfilename(
+            filetypes=[('jpg files', '*.jpg')],
+            initialdir = os.getcwd()
+            )
     if not read_fileName:
         sys.exit() # null read_fileName
     return read_fileName
 
 def Draw_map(lt, ln, dt):
     def save_map():
-        os.system('''/usr/bin/osascript -e\
-                'tell app "Finder" to set frontmost of process "Python" to true' ''')
-        html_fileName = tkdialog.asksaveasfilename(defaultextension='.html',\
-            initialdir=os.getcwd(), initialfile='location_map.html', title='Save as(.html)')
+        os.system('''
+            /usr/bin/osascript -e
+            'tell app "Finder" to set frontmost of process "Python" to true'
+            ''')
+        html_fileName = tkdialog.asksaveasfilename(
+            defaultextension='.html',
+            initialdir=os.getcwd(),
+            initialfile='location_map.html', title='Save as(.html)'
+            )
         if not html_fileName:
             return  # null write_filename
         mymap.save(html_fileName)
 
-    mymap = folium.Map(location=[lt, ln],\
-        tiles='https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',\
-        attr='国土地理院 淡色地図', zoom_start=15)
+    mymap = folium.Map(
+        location=[lt, ln],
+        tiles='https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',
+        attr='国土地理院 淡色地図', zoom_start=15
+        )
     if dt != '':
         dt = '<span style="white-space: nowrap;">' + dt + '</span>'
         folium.Marker(location=[lt, ln], popup=dt, show=True).add_to(mymap)
